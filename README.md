@@ -101,38 +101,121 @@ graph TB
 
 ## Installation
 
-```bash
-git clone https://github.com/HARSHILL2023/codeavengers.git && cd codeavengers
+### Prerequisites
 
-# Backend
-cd advisor-backend && npm install
+Make sure the following are installed on your machine:
 
-# Frontend
-cd ../advisor-frontend && npm install
+- Node.js 18+ and npm
+- Python 3.10+
+- Ollama installed and available in your PATH
+- MongoDB running locally or a MongoDB Atlas connection string
 
-# Analytics
-cd ../advisor-analytics && python -m venv venv && .\venv\Scripts\activate && pip install -r requirements.txt
+### 1) Clone the repo
 
-# Pull LLM model
-ollama pull gemma3
+```powershell
+git clone https://github.com/HARSHILL2023/codeavengers.git
+cd advisor-project
 ```
 
-Run 3 terminals:
-- `advisor-backend` → `npm run dev` (port 5000)
-- `advisor-analytics` → `uvicorn main:app --reload --port 8000`
-- `advisor-frontend` → `npm run dev` (port 5173)
+### 2) Install dependencies
+
+```powershell
+# Backend
+cd advisor-backend
+npm install
+Copy-Item .env.example .env
+
+# Frontend
+cd ../advisor-frontend
+npm install
+Copy-Item .env.example .env
+
+# Analytics
+cd ../advisor-analytics
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+If PowerShell blocks script activation, run:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+```
+
+### 3) Pull the local LLM model
+
+```powershell
+ollama pull llama3.2:3b
+```
+
+### 4) Run the services
+
+Open separate terminals and run the following commands.
+
+#### Terminal 1 — Analytics API
+
+```powershell
+cd advisor-project\advisor-analytics
+.\.venv\Scripts\Activate.ps1
+uvicorn main:app --reload --port 8000
+```
+
+#### Terminal 2 — Backend API
+
+```powershell
+cd advisor-project\advisor-backend
+ollama serve
+node server.js
+```
+
+#### Terminal 3 — Frontend
+
+```powershell
+cd advisor-project\advisor-frontend
+npm run dev
+```
+
+You can also start everything from the repo root with:
+
+```powershell
+.\start-all.ps1
+```
+
+### Sample environment files
+
+Backend environment variables in [advisor-backend/.env.example](advisor-backend/.env.example):
+
+```env
+PORT=5000
+MONGODB_URI=mongodb://127.0.0.1:27017/advisorDB
+ANALYTICS_SERVICE_URL=http://localhost:8000
+OLLAMA_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2:3b
+```
+
+Frontend environment variables in [advisor-frontend/.env.example](advisor-frontend/.env.example):
+
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
 
 ---
 
 ## Environment Variables
 
-| Variable | Description | Required | Default |
+| Service | Variable | Description | Required |
 |---|---|---|---|
-| `MONGODB_URI` | MongoDB connection string | ✅ | — |
-| `OLLAMA_URL` | Ollama API base URL | ❌ | `http://localhost:11434` |
-| `OLLAMA_MODEL` | LLM model name | ❌ | `gemma3` |
-| `ANALYTICS_URL` | Analytics service URL | ❌ | `http://localhost:8000` |
-| `CORS_ORIGIN` | Allowed CORS origin | ❌ | `http://localhost:5173` |
+| Backend | `PORT` | Backend port | ❌ |
+| Backend | `MONGODB_URI` | MongoDB connection string | ✅ |
+| Backend | `ANALYTICS_SERVICE_URL` | Analytics service base URL | ❌ |
+| Backend | `OLLAMA_URL` | Ollama base URL | ❌ |
+| Backend | `OLLAMA_MODEL` | Ollama model name | ❌ |
+| Frontend | `VITE_API_URL` | Backend API URL | ❌ |
+| Frontend | `VITE_SUPABASE_URL` | Supabase project URL | ❌ |
+| Frontend | `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | ❌ |
 
 ---
 
