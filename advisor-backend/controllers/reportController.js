@@ -1,4 +1,4 @@
-﻿const Report = require('../models/Report');
+const Report = require('../models/Report');
 const Conversation = require('../models/Conversation');
 const analyticsService = require('../services/analyticsService');
 
@@ -19,6 +19,62 @@ exports.getReport = async (req, res) => {
 exports.generateReport = async (req, res) => {
   try {
     const { conversationId } = req.body;
+    const mongoose = require('mongoose');
+    const isValidObjectId = mongoose.Types.ObjectId.isValid(conversationId);
+    
+    if (!isValidObjectId || conversationId === 'demo') {
+      const mockRecommendations = [
+        {
+          schemeName: 'SBI Small Cap Fund',
+          schemeCode: '100027',
+          cagr: 15.5,
+          volatility: 22.3,
+          sharpeRatio: 0.85,
+          maxDrawdown: -18.4,
+          allocation: 40,
+          reason: 'Recommended for wealth creation'
+        },
+        {
+          schemeName: 'HDFC Mid-Cap Opportunities Fund',
+          schemeCode: '119551',
+          cagr: 14.2,
+          volatility: 20.1,
+          sharpeRatio: 0.79,
+          maxDrawdown: -16.2,
+          allocation: 30,
+          reason: 'Balanced growth potential'
+        },
+        {
+          schemeName: 'ICICI Prudential Bluechip Fund',
+          schemeCode: '118403',
+          cagr: 12.8,
+          volatility: 18.7,
+          sharpeRatio: 0.72,
+          maxDrawdown: -14.8,
+          allocation: 30,
+          reason: 'Stable large-cap exposure'
+        }
+      ];
+      
+      const mockProfile = {
+        riskTolerance: 'medium',
+        investmentHorizon: 'medium',
+        monthlyAmount: 10000,
+        age: 30,
+        goal: 'wealth creation'
+      };
+      
+      const mockSummary = generateSummary(mockProfile, { risk_category: 'Moderate' }, mockRecommendations);
+      
+      return res.status(200).json({
+        _id: 'demo-report-id',
+        conversationId: 'demo-conversation-id',
+        profile: mockProfile,
+        recommendations: mockRecommendations,
+        summary: mockSummary,
+        disclaimer: 'This is a demo report. Past performance does not guarantee future returns.'
+      });
+    }
     
     const conversation = await Conversation.findById(conversationId);
     if (!conversation) {
@@ -161,6 +217,26 @@ exports.getReportsByConversation = async (req, res) => {
   try {
     const { conversationId } = req.params;
     const reports = await Report.find({ conversationId });
+    res.json(reports);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get all reports for a user
+exports.getReportsByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+    
+    // Find all conversations belonging to the user
+    const conversations = await Conversation.find({ userId });
+    const conversationIds = conversations.map(c => c._id);
+    
+    // Find all reports generated for those conversations
+    const reports = await Report.find({ conversationId: { $in: conversationIds } }).sort({ createdAt: -1 });
     res.json(reports);
   } catch (error) {
     res.status(500).json({ error: error.message });

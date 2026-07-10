@@ -1,4 +1,4 @@
-﻿const Conversation = require('../models/Conversation');
+const Conversation = require('../models/Conversation');
 const ollamaService = require('../services/ollamaService');
 
 // Send message and get AI response
@@ -9,6 +9,11 @@ exports.sendMessage = async (req, res) => {
 
     if (!content) {
       return res.status(400).json({ error: 'Message content is required' });
+    }
+
+    // Check if id is valid
+    if (!id || id === 'null' || id === 'undefined') {
+      return res.status(400).json({ error: 'Invalid conversation ID' });
     }
 
     // Find conversation
@@ -89,23 +94,77 @@ async function extractProfile(conversation) {
     }
   }
 
-  // Extract monthly amount
+  // Extract monthly amount (contextual matches to avoid capturing age)
   if (!profile.monthlyAmount) {
-    const match = text.match(/(\d+)\s*(k|thousand|lakh|crore)?/);
+    const amountRegexes = [
+      /(?:invest|amount|rs\.?|₹|saving|monthly)\s*(\d+)\s*(k|thousand|lakh|crore)?/i,
+      /(\d+)\s*(k|thousand|lakh|crore)?\s*(?:per\s*month|monthly|a\s*month|p\.?m\.?)/i
+    ];
+    
+    let match = null;
+    for (const regex of amountRegexes) {
+      match = text.match(regex);
+      if (match) break;
+    }
+    
+    if (!match) {
+      // Fallback: match any number that is NOT followed by year/age terms
+      const allNumbers = [...text.matchAll(/(\d+)\s*(k|thousand|lakh|crore)?/gi)];
+      for (const m of allNumbers) {
+        const numIndex = m.index;
+        const surroundingText = text.substring(numIndex, numIndex + 30);
+        if (!/years?|yrs?|y(?:\s|$)|old|age/i.test(surroundingText)) {
+          match = m;
+          break;
+        }
+      }
+    }
+
     if (match) {
       let amount = parseInt(match[1]);
-      if (match[2] === 'k' || match[2] === 'thousand') amount *= 1000;
-      if (match[2] === 'lakh') amount *= 100000;
-      if (match[2] === 'crore') amount *= 10000000;
-      profile.monthlyAmount = amount;
+      const unit = (match[2] || '').toLowerCase();
+      if (unit === 'k' || unit === 'thousand') amount *= 1000;
+      if (unit === 'lakh') amount *= 100000;
+      if (unit === 'crore') amount *= 10000000;
+      
+      if (amount > 100) {
+        profile.monthlyAmount = amount;
+      }
     }
   }
 
   // Extract age
   if (!profile.age) {
-    const match = text.match(/(\d+)\s*(years?|yrs?|y)/);
+    const ageRegexes = [
+      /(?:i\s*am|age|old)\s*(\d+)\s*(?:years?|yrs?|y)?/i,
+      /(\d+)\s*(?:years?\s*old|years?\s*of\s*age|yrs?\s*old)/i
+    ];
+    let match = null;
+    for (const regex of ageRegexes) {
+      match = text.match(regex);
+      if (match) break;
+    }
+    
     if (match) {
-      profile.age = parseInt(match[1]);
+      const ageVal = parseInt(match[1]);
+      if (ageVal > 15 && ageVal < 100) {
+        profile.age = ageVal;
+      }
+    }
+  }
+
+  // Extract goal
+  if (!profile.goal) {
+    if (text.includes('retirement') || text.includes('retire')) {
+      profile.goal = 'retirement';
+    } else if (text.includes('education') || text.includes('child') || text.includes('college') || text.includes('study')) {
+      profile.goal = 'education';
+    } else if (text.includes('wealth') || text.includes('grow') || text.includes('growth') || text.includes('save') || text.includes('creation')) {
+      profile.goal = 'wealth creation';
+    } else if (text.includes('home') || text.includes('house') || text.includes('property')) {
+      profile.goal = 'home purchase';
+    } else if (text.includes('car') || text.includes('vehicle')) {
+      profile.goal = 'car purchase';
     }
   }
 
@@ -124,6 +183,10 @@ async function extractProfile(conversation) {
 exports.getNextQuestion = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (!id || id === 'null' || id === 'undefined') {
+      return res.status(400).json({ error: 'Invalid conversation ID' });
+    }
     
     const conversation = await Conversation.findById(id);
     if (!conversation) {
@@ -171,6 +234,10 @@ exports.getNextQuestion = async (req, res) => {
 exports.checkComplete = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (!id || id === 'null' || id === 'undefined') {
+      return res.status(400).json({ error: 'Invalid conversation ID' });
+    }
     
     const conversation = await Conversation.findById(id);
     if (!conversation) {
