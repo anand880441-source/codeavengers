@@ -1,0 +1,44 @@
+﻿# Node
+node_modules/
+npm-debug.log*
+.env
+.DS_Store
+dist/
+build/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.class
+venv/
+env/
+.pytest_cache/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-*
+
+# OS
+Thumbs.db
+.DS_Store
+*.tmp
+
+# MongoDB
+data/
+*.log
+
+# Ollama
+ollama_data/
+
+# Environment
+.env.local
+.env.*.local
