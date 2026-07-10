@@ -1,5 +1,4 @@
 ﻿const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/database');
@@ -17,6 +16,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // Connect to MongoDB
 connectDB();
+
+// Routes
+app.use('/api/conversations', require('./routes/conversationRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
 
 // Health Check Route
 app.get('/api/health', (req, res) => {
