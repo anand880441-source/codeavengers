@@ -6,7 +6,7 @@ class OllamaService {
     this.model = process.env.OLLAMA_MODEL || 'llama3.2:3b';
     this.client = axios.create({
       baseURL: this.baseURL,
-      timeout: 120000, // Increased to 2 minutes
+      timeout: 120000,
       headers: {
         'Content-Type': 'application/json'
       }
@@ -25,7 +25,7 @@ class OllamaService {
         options: {
           temperature: 0.7,
           top_p: 0.9,
-          num_predict: 200 // Limit response length for speed
+          num_predict: 150
         }
       });
 
@@ -33,15 +33,14 @@ class OllamaService {
         return response.data.response;
       } else {
         console.error('Unexpected Ollama response:', response.data);
-        return 'I apologize, but I am having trouble generating a response right now. Could you please rephrase your question?';
+        return this.getFallbackResponse(messages);
       }
     } catch (error) {
       console.error('Error generating response from Ollama:', error.message);
       if (error.response) {
         console.error('Ollama API error:', error.response.data);
       }
-      // Return a fallback response instead of throwing
-      return 'I understand you want to invest. To give you better guidance, could you tell me about your risk tolerance - are you comfortable with high risk for potentially higher returns, or do you prefer safer investments?';
+      return this.getFallbackResponse(messages);
     }
   }
 
@@ -60,6 +59,57 @@ class OllamaService {
 
     prompt = prompt + 'Assistant: ';
     return prompt;
+  }
+
+  getFallbackResponse(messages) {
+    // Get the last user message
+    let userMessage = '';
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') {
+        userMessage = messages[i].content.toLowerCase();
+        break;
+      }
+    }
+
+    const hasHistory = messages.length > 1;
+
+    // Check for specific keywords
+    if (userMessage.includes('retirement') || userMessage.includes('retire')) {
+      return 'Retirement planning is a great goal! How many years do you have until retirement? This will help me suggest appropriate investment strategies.';
+    }
+    
+    if (userMessage.includes('risk') || userMessage.includes('safe') || userMessage.includes('volatile')) {
+      if (userMessage.includes('high') || userMessage.includes('aggressive')) {
+        return 'I understand you are comfortable with higher risk. Do you have a specific investment horizon in mind?';
+      }
+      return 'I understand you prefer safer investments. What is your investment horizon?';
+    }
+    
+    if (userMessage.includes('month') || userMessage.includes('invest')) {
+      const match = userMessage.match(/\d+/);
+      if (match) {
+        const amount = match[0];
+        return 'Great! So you can invest Rs.' + amount + ' per month. What is your investment goal - retirement, education, or wealth creation?';
+      }
+      return 'How much are you planning to invest monthly? This helps me provide personalized recommendations.';
+    }
+    
+    if (userMessage.includes('horizon') || userMessage.includes('year') || userMessage.includes('term')) {
+      if (userMessage.includes('long') || userMessage.includes('10')) {
+        return 'A long-term horizon (7+ years) is great for wealth creation. What is your risk tolerance?';
+      }
+      return 'What is your investment horizon? Short term (1-3 years), medium term (3-7 years), or long term (7+ years)?';
+    }
+
+    if (userMessage.includes('goal') || userMessage.includes('save') || userMessage.includes('wealth')) {
+      return 'Great! Could you tell me about your risk tolerance? Are you comfortable with market fluctuations?';
+    }
+
+    if (!hasHistory) {
+      return 'Hello! I am your AI Mutual Fund Advisor. To help you better, could you tell me about your investment goals? Are you saving for retirement, education, or wealth creation?';
+    }
+
+    return 'I understand. Could you tell me more about your investment preferences? For example, your risk tolerance or investment horizon?';
   }
 
   async checkHealth() {
@@ -99,8 +149,7 @@ class OllamaService {
       return response;
     } catch (error) {
       console.error('Error in getConversationResponse:', error);
-      // Return a fallback response
-      return 'I understand you want to invest for retirement. To give you better guidance, could you tell me about your risk tolerance - are you comfortable with high risk for potentially higher returns, or do you prefer safer investments?';
+      return this.getFallbackResponse(messages);
     }
   }
 }
