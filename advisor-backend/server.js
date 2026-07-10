@@ -20,6 +20,7 @@ connectDB();
 // Routes
 app.use('/api/conversations', require('./routes/conversationRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/chat', require('./routes/chatRoutes'));
 
 // Health Check Route
 app.get('/api/health', (req, res) => {
@@ -34,4 +35,5 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
   console.log('Server running on http://localhost:' + PORT);
   console.log('Health check: http://localhost:' + PORT + '/api/health');
+  console.log('Chat endpoint: http://localhost:' + PORT + '/api/chat/:id/messages');
 });
