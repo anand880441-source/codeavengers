@@ -3,12 +3,9 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "env": {
-    "VITE_SUPABASE_URL": "https://oqzqbemkjzyuyiofrres.supabase.co",
-    "VITE_SUPABASE_ANON_KEY": "sb_publishable_1qmO2AhLKsl7Un3Mt9IKrw_PZGtXiNz",
-    "VITE_API_URL": "https://advisor-backend.onrender.com/api",
-    "VITE_GOOGLE_CLIENT_ID": "389624065290-etu75kagl5l66od7kvljt09lckc01ei9.apps.googleusercontent.com"
-  }
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
