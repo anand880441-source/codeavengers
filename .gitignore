@@ -43,3 +43,4 @@ ollama_data/
 .env.local
 .env.*.local
 advisor-frontend-backup
+*.env.production

@@ -1,5 +1,5 @@
 ﻿const Conversation = require('../models/Conversation');
-const groqService = require('./groqService');
+const groqService = require('../services/groqService');
 
 exports.sendMessage = async (req, res) => {
   try {

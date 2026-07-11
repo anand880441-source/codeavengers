@@ -11,10 +11,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS
+# CORS configuration for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5000"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "https://advisor-frontend.vercel.app",
+        "https://codeavengers.vercel.app",
+        "https://advisor-backend.onrender.com",
+        os.getenv("FRONTEND_URL", "")
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,7 +39,7 @@ def read_root():
 # Health check
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "environment": os.getenv("NODE_ENV", "development")}
 
 # Import and include routes
 from app.routes import funds, analytics

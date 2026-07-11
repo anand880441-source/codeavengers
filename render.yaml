@@ -1,0 +1,40 @@
+﻿services:
+  - type: web
+    name: advisor-backend
+    runtime: node
+    repo: https://github.com/anand880441-source/codeavengers
+    branch: main
+    plan: free
+    buildCommand: cd advisor-backend && npm install
+    startCommand: cd advisor-backend && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false
+      - key: ANALYTICS_SERVICE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
+      - key: FRONTEND_URL
+        sync: false
+
+  - type: web
+    name: advisor-analytics
+    runtime: python
+    repo: https://github.com/anand880441-source/codeavengers
+    branch: main
+    plan: free
+    buildCommand: cd advisor-analytics && pip install -r requirements.txt
+    startCommand: cd advisor-analytics && uvicorn main:app --host 0.0.0.0 --port 8000
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MFAPI_BASE_URL
+        value: https://api.mfapi.in
+      - key: FRONTEND_URL
+        sync: false
