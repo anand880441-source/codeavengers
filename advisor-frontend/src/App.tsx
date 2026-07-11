@@ -48,6 +48,7 @@ function App() {
             <Route path="/signin" element={<SignInPage />} />
             <Route path="/signup" element={<SignUpPage />} />
 
+            {/* Catch all - redirect to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

@@ -1,4 +1,4 @@
-import { useAuth } from '../contexts/AuthContext';
+﻿import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getUserReports } from '../services/api';
@@ -28,18 +28,23 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // If not loading and no user, redirect to signin
     if (!loading && !user) {
       navigate('/signin');
+      return;
     }
   }, [user, loading, navigate]);
 
   useEffect(() => {
     const fetchUserReports = async () => {
-      if (!user) return;
+      if (!user) {
+        setLoadingReports(false);
+        return;
+      }
       try {
         setLoadingReports(true);
         const data = await getUserReports(user.id);
-        setReports(data);
+        setReports(data || []);
       } catch (err) {
         console.error('Error fetching user reports:', err);
         setError('Could not retrieve your reports. Please try again.');
@@ -53,17 +58,7 @@ export default function Dashboard() {
     }
   }, [user]);
 
-  const handleViewReport = (reportId: string) => {
-    localStorage.setItem('viewReportId', reportId);
-    navigate('/report');
-  };
-
-  const handleStartNew = () => {
-    localStorage.removeItem('viewReportId');
-    localStorage.removeItem('conversationId');
-    navigate('/disclaimer');
-  };
-
+  // Show loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--theme-bg)' }}>
@@ -74,6 +69,22 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  // If no user, return null (redirect happens in useEffect)
+  if (!user) {
+    return null;
+  }
+
+  const handleViewReport = (reportId: string) => {
+    localStorage.setItem('viewReportId', reportId);
+    navigate('/report');
+  };
+
+  const handleStartNew = () => {
+    localStorage.removeItem('viewReportId');
+    localStorage.removeItem('conversationId');
+    navigate('/disclaimer');
+  };
 
   return (
     <div className="min-h-screen font-sans antialiased" style={{ backgroundColor: 'var(--theme-bg)', color: 'var(--theme-text)' }}>
@@ -218,7 +229,7 @@ export default function Dashboard() {
                   <span className="font-semibold">{user?.email}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b" style={{ borderColor: 'var(--theme-border-soft)' }}>
-                  <span className="text-[var(--theme-text-muted)]">Supabase ID</span>
+                  <span className="text-[var(--theme-text-muted)]">User ID</span>
                   <span className="font-mono text-[10px] text-[var(--theme-text-muted)] truncate max-w-[120px]">{user?.id}</span>
                 </div>
                 <div className="flex justify-between py-1">
